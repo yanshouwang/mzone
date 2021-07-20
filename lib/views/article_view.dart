@@ -1,9 +1,16 @@
+import 'dart:convert';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:markdown/markdown.dart' as md;
+import 'package:mzone/util.dart';
 
 class ArticleView extends StatefulWidget {
-  const ArticleView({Key? key}) : super(key: key);
+  final OctoNode? article;
+
+  const ArticleView({Key? key, OctoNode? article})
+      : this.article = article,
+        super(key: key);
 
   @override
   _ArticleViewState createState() => _ArticleViewState();
@@ -23,7 +30,13 @@ class _ArticleViewState extends State<ArticleView> {
     setup();
   }
 
-  void setup() async {}
+  void setup() async {
+    if (widget.article == null) return;
+    final blob = await octo.getBlob(owner, repo, widget.article!.sha);
+    final encoded = blob.content.replaceAll('\n', '');
+    final decoded = base64.decode(encoded);
+    source.value = utf8.decode(decoded);
+  }
 
   @override
   Widget build(BuildContext context) {

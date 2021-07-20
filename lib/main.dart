@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
       title: 'MZONE',
       theme: ThemeData(
         primarySwatch: Colors.blue,
-        platform: TargetPlatform.windows,
+        platform: TargetPlatform.iOS,
       ),
       home: HomeView(title: 'MZONE'),
     );

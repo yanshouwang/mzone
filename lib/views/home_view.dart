@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mzone/styles.dart';
+import 'package:mzone/util.dart';
 import 'package:mzone/util/octo_kit.dart';
 import 'package:mzone/util/octo_node.dart';
 
@@ -25,8 +26,11 @@ class HomeView extends StatefulWidget {
 
 class _HomeViewState extends State<HomeView> {
   ValueNotifier<List<OctoNode>> categories;
+  ValueNotifier<OctoNode?> article;
 
-  _HomeViewState() : categories = ValueNotifier([]);
+  _HomeViewState()
+      : categories = ValueNotifier([]),
+        article = ValueNotifier(null);
 
   @override
   void initState() {
@@ -61,66 +65,99 @@ class _HomeViewState extends State<HomeView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Row(
+      body: Column(
         children: [
-          Container(
-            width: 240.0,
-            child: Column(
+          Expanded(
+            child: Row(
               children: [
                 Container(
-                  padding: EdgeInsets.all(20.0),
-                  child: Row(
+                  width: 240.0,
+                  child: Column(
                     children: [
-                      CircleAvatar(
-                        backgroundColor: Colors.grey,
-                        backgroundImage: NetworkImage(
-                          'https://avatars.githubusercontent.com/u/24455689?v=4',
+                      Container(
+                        padding: EdgeInsets.all(20.0),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              backgroundColor: Colors.grey,
+                              backgroundImage: NetworkImage(
+                                'https://avatars.githubusercontent.com/u/24455689?v=4',
+                              ),
+                              radius: 40.0,
+                            ),
+                            SizedBox(width: 20.0),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'iAMD',
+                                  style: TextStyles.title,
+                                ),
+                                Text(
+                                  'AMD yes!',
+                                  style: TextStyles.signature,
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
-                        radius: 40.0,
                       ),
-                      SizedBox(width: 20.0),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'iAMD',
-                            style: TextStyles.title,
-                          ),
-                          Text(
-                            'AMD yes!',
-                            style: TextStyles.signature,
-                          ),
-                        ],
-                      ),
+                      Expanded(
+                        child: ValueListenableBuilder(
+                          valueListenable: categories,
+                          builder:
+                              (context, List<OctoNode> categoriesValue, child) {
+                            return ListView.builder(
+                              itemCount: categoriesValue.length,
+                              itemBuilder: (context, i) {
+                                final category = categoriesValue[i];
+                                return ExpansionTile(
+                                  tilePadding:
+                                      EdgeInsets.symmetric(horizontal: 20.0),
+                                  childrenPadding:
+                                      EdgeInsets.symmetric(horizontal: 20.0),
+                                  title: Text(
+                                    category.path,
+                                    style: TextStyles.category,
+                                    overflow: TextOverflow.ellipsis,
+                                    softWrap: false,
+                                  ),
+                                  children: [
+                                    buildArticles(category),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      )
                     ],
                   ),
                 ),
                 Expanded(
                   child: ValueListenableBuilder(
-                    valueListenable: categories,
-                    builder: (context, List<OctoNode> categoriesValue, child) {
-                      return ListView.builder(
-                        itemCount: categoriesValue.length,
-                        itemBuilder: (context, i) {
-                          final category = categoriesValue[i];
-                          return ListTile(
-                            contentPadding: EdgeInsets.only(left: 20.0),
-                            title: Text(
-                              category.path,
-                              style: TextStyles.category,
-                            ),
-                            onTap: () {},
-                          );
-                        },
+                    valueListenable: article,
+                    builder: (context, OctoNode? articleValue, child) {
+                      return ArticleView(
+                        key: articleValue == null
+                            ? null
+                            : Key(articleValue.path),
+                        article: articleValue,
                       );
                     },
                   ),
-                )
+                ),
               ],
             ),
           ),
-          Expanded(
-            child: ArticleView(),
+          Container(
+            height: 40.0,
+            child: Center(
+              child: Text(
+                'Copyright @ ${DateTime.now().year} yanshouwang. All rights reserved. Powered by Flutter.',
+                style: TextStyles.copyright,
+              ),
+            ),
           ),
         ],
       ),
@@ -131,5 +168,33 @@ class _HomeViewState extends State<HomeView> {
   void dispose() {
     categories.dispose();
     super.dispose();
+  }
+
+  Widget buildArticles(OctoNode category) {
+    return FutureBuilder(
+      future: octo.getTree(owner, repo, category.sha),
+      builder: (context, AsyncSnapshot<OctoTree> snapshot) {
+        if (snapshot.hasData) {
+          final nodes = snapshot.data!.nodes ?? [];
+          return Column(
+            children: nodes.where((node) => node.path.endsWith('.md')).map(
+              (node) {
+                return ListTile(
+                  contentPadding: EdgeInsets.only(left: 20.0),
+                  title: Text(
+                    node.path.substring(0, node.path.length - 3),
+                    style: TextStyles.category,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  onTap: () => article.value = node,
+                );
+              },
+            ).toList(),
+          );
+        } else {
+          return CircularProgressIndicator();
+        }
+      },
+    );
   }
 }
