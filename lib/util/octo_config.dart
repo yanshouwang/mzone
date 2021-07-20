@@ -1,3 +1,4 @@
 const owner = 'yanshouwang';
 const repo = 'mzone';
-const key = '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';
+const token =
+    'eWFuc2hvdXdhbmc6Z2hwX0NLcTVjb0xhMVFSVkFXMHZ6NFFjZGFqM0FiQWZwNDFsamRGeg==';

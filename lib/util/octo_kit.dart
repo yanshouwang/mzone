@@ -34,12 +34,5 @@ class _OctoKit implements OctoKit {
     return blob;
   }
 
-  Map<String, String> get headers {
-    final encoded = utf8.encode('$owner:$key');
-    final token = base64.encode(encoded);
-    final headers = {
-      'Authorization': 'Basic $token',
-    };
-    return headers;
-  }
+  Map<String, String> get headers => {'Authorization': 'Basic $token'};
 }
